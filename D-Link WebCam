@@ -1,0 +1,63 @@
+/** Dlink Cam */
+
+
+preferences
+{
+	input("username", "text", title:"Username", description: "Dlink Username:")
+	input("password", "password", title:"Password", description: "DLink Password:")
+	input("URL", "text", title:"IP", description: "URL of Camera")
+	input("port", "text", title:"port", description: "Port")
+    
+}
+
+metadata {
+  tiles {
+    carouselTile("cameraDetails", "device.image", width: 3, height: 3) { }
+    
+    standardTile("camera", "device.image", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
+      state "default", label: "", action: "Image Capture.take", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
+    }
+    
+    standardTile("take", "device.image", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false, decoration: "flat") {
+      state "take", label: "", action: "Image Capture.take", icon: "st.secondary.take", nextState:"taking"
+    }
+    
+  
+}
+
+main "camera"
+details(["cameraDetails","take"])
+}
+
+
+
+def parseCameraResponse(def response) {
+  if(response.headers.'Content-Type'.contains("image/jpeg")) {
+    def imageBytes = response.data
+      if(imageBytes) {
+   storeImage(getPictureName(), imageBytes)
+   sendpic()
+   }
+  }
+}
+
+private getPictureName() {
+  def pictureUuid = java.util.UUID.randomUUID().toString().replaceAll('-', '')
+  "image" + "_$pictureUuid" + ".jpg"
+  
+}
+
+private take() {
+  log.debug("Take a photo")
+httpGet("http://admin:homecam@69.118.64.225:8090/image/jpeg.cgi"){response -> 
+log.debug("Image captured")
+  parseCameraResponse(response)
+}
+ }
+ 
+ 
+def sendpic(){ 
+httpGet("http://sendgrid.com/api/mail.send.json?to=seanstozki%40me.com&toname=Sean&from=Sastozki%40optonline.net&fromname=SmartThings&subject=Picture&text=Picture%20from%20Dlink&api_user=sastozki&api_key=control123"){response -> 
+} 
+log.debug ("sending photo") 
+}
